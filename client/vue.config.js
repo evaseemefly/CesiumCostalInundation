@@ -58,5 +58,12 @@ module.exports = defineConfig({
 		// 	warnings: false,
 		// 	errors: false,
 		// },
+		proxy: {
+			'/images': {
+				target: 'http://128.5.9.79:82',
+				changeOrigin: true,
+				pathRewrite: { '^/images': '' },
+			},
+		},
 	},
 })

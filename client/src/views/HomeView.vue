@@ -27,18 +27,24 @@ export default class HomeView extends Vue {
 	/** cesium token */
 	private cesiumToken = CESIUM_TOKEN
 	name: 'CesiumViewer'
-	loadUrl = 'http://localhost:82/images/global_surge/coastal_data/zmax_center.json'
+	loadUrl = 'http://128.5.9.79:82/images/GLOBAL/TEST/zmax_center.json'
 	mounted() {
 		Cesium.Ion.defaultAccessToken = CESIUM_TOKEN
 
 		let viewer: Cesium.Viewer = new Cesium.Viewer('cesiumContainer')
+
+		/**
+		 * step1: 加载地形
+		 * step2: 加载地形
+		 * step3: 加载淹没栅格图层(线性色标渲染)
+		 */
 
 		// + 加载建筑物
 		this.loadBuildings(viewer).then(() => {
 			// + 加载地形
 			this.loadTerrain(viewer)
 			// this.loadGeoJson2Map(viewer, this.loadUrl)
-			this.loadGeoJSON2MapbyColorScale(viewer, this.loadUrl, '_最大淹没深度(cm)', true)
+			this.loadGeoJSON2MapbyColorScale(viewer, this.loadUrl, '_最大淹没深度(cm)', false)
 			// this.loadGeoJson2MapbyWater(viewer, this.loadUrl)
 			// this.loadGeoJson2MapbyWaterPolygon(viewer, this.loadUrl)
 		})
@@ -63,6 +69,7 @@ export default class HomeView extends Vue {
 			})
 	}
 
+	/** 按照属性名称加载对应的geojson并使用线性色标渲染 */
 	loadGeoJSON2MapbyColorScale(
 		viewer: Cesium.Viewer,
 		url: string,

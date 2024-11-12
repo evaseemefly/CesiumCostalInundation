@@ -685,6 +685,15 @@ const fillDefaultVal2List = <T>(vals: T[], defaultList: T[], fillDefault: T = nu
 	return vals
 }
 
+/**
+ * @description 淹没风险示意栅格图层色标
+ * @author evaseemefly
+ * @date 2024/11/12
+ * @param {number} val
+ * @param {number[]} [ranges=[50, 100, 150, 200, 250]]
+ * @param {string[]} [scales=['#153C83', '#4899D9', '#FFFB58', '#F1C712', '#E79325', '#F22015', '#C40E0F']]
+ * @returns {*}  {string}
+ */
 const filterSurgeColorScales = (
 	val: number,
 	ranges: number[] = [50, 100, 150, 200, 250],
