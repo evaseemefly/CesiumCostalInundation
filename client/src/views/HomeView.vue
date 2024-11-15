@@ -27,7 +27,22 @@ export default class HomeView extends Vue {
 	/** cesium token */
 	private cesiumToken = CESIUM_TOKEN
 	name: 'CesiumViewer'
-	loadUrl = 'http://128.5.9.79:82/images/GLOBAL/TEST/zmax_center.json'
+	// loadUrl = 'http://128.5.9.79:82/images/GLOBAL/TEST/zmax_center.json'
+	// loadUrl = 'http://localhost:82/images/global_surge/coastal_data/zmax_lte_100_new.json'
+	// loadUrl = 'http://localhost:82/images/global_surge/coastal_data/zmax_lte_desc_100_1114.json'
+
+	// loadUrl =
+	// 	'http://localhost:82/images/global_surge/coastal_data/zmax_lte_desc_smooth_100_b_10_1114.json'
+
+	// loadUrl =
+	// 	'http://localhost:82/images/global_surge/coastal_data/zmax_lte_desc_smooth_100_b_20_1114.json'
+
+	loadUrl =
+		'http://localhost:82/images/global_surge/coastal_data/zmax_lte_desc_smooth_100_b_50_1114.json'
+
+	// TODO:[-] 24-11-15 B 20 大于 150cm
+	// loadUrl =
+	// 	'http://localhost:82/images/global_surge/coastal_data/zmax_lte_desc_lte_150_smooth_100_b_20.json'
 	mounted() {
 		Cesium.Ion.defaultAccessToken = CESIUM_TOKEN
 
@@ -44,9 +59,11 @@ export default class HomeView extends Vue {
 			// + 加载地形
 			this.loadTerrain(viewer)
 			// this.loadGeoJson2Map(viewer, this.loadUrl)
-			this.loadGeoJSON2MapbyColorScale(viewer, this.loadUrl, '_最大淹没深度(cm)', false)
+			// this.loadGeoJsonMultiLine2Map(viewer, this.loadUrl)
+			// this.loadGeoJSON2MapbyColorScale(viewer, this.loadUrl, '_最大淹没深度(cm)', false)
 			// this.loadGeoJson2MapbyWater(viewer, this.loadUrl)
-			// this.loadGeoJson2MapbyWaterPolygon(viewer, this.loadUrl)
+			this.loadGeoJson2MapbyWaterPolygon(viewer, this.loadUrl)
+			// this.loadGeoJson2MapbyCube(viewer, this.loadUrl, '_最大淹没深度(cm)', false)
 		})
 	}
 
@@ -62,6 +79,26 @@ export default class HomeView extends Vue {
 		})
 			.then(function (dataSource) {
 				viewer.dataSources.add(dataSource)
+				viewer.zoomTo(dataSource)
+			})
+			.catch(function (error) {
+				console.error('Error loading GeoJSON:', error)
+			})
+	}
+
+	loadGeoJsonMultiLine2Map(viewer: Cesium.Viewer, url: string): void {
+		Cesium.GeoJsonDataSource.load(url, {
+			clampToGround: true,
+			markerSymbol: '?', // 适用于点数据的符号
+			markerColor: Cesium.Color.RED, // 点数据的颜色
+			stroke: Cesium.Color.YELLOW, // 线数据的颜色
+			fill: Cesium.Color.BLUE.withAlpha(0.5), // 面数据的填充颜色
+			strokeWidth: 2, // 线宽
+		})
+			.then(function (dataSource) {
+				viewer.dataSources.add(dataSource)
+
+				// 缩放视图以适应加载的 GeoJSON 数据
 				viewer.zoomTo(dataSource)
 			})
 			.catch(function (error) {
@@ -140,6 +177,76 @@ export default class HomeView extends Vue {
 		})
 	}
 
+	loadGeoJson2MapbyCube(
+		viewer: Cesium.Viewer,
+		url: string,
+		propertyName: string,
+		outline = true
+	): void {
+		// 加载 GeoJSON 数据
+		Cesium.GeoJsonDataSource.load(url)
+			.then(function (dataSource) {
+				viewer.dataSources.add(dataSource)
+
+				// 获取所有实体
+				const entities = dataSource.entities.values
+
+				// 遍历每个实体
+				for (let i = 0; i < entities.length; i++) {
+					const entity = entities[i]
+
+					// 假设 GeoJSON 数据中有一个属性叫做 'property'，根据其值设置颜色
+					const propertyValue = entity.properties[propertyName].getValue()
+
+					// 根据属性值设置颜色
+					let color: Cesium.Color = null
+					let colorStr: string = filterSurgeColorScales(propertyValue)
+					color = Cesium.Color.fromCssColorString(colorStr)
+					// 为实体设置材质颜色
+					if (entity != null && entity.polygon) {
+						// 获取多边形的中心
+						const positions = entity.polygon.hierarchy.getValue(
+							Cesium.JulianDate.now()
+						).positions
+						// 计算多边形的边界框
+						const boundingSphere = Cesium.BoundingSphere.fromPoints(positions)
+						const center = Cesium.BoundingSphere.fromPoints(positions).center
+						const cartographic = Cesium.Cartographic.fromCartesian(center)
+						const longitude = cartographic.longitude
+						const latitude = cartographic.latitude
+						const dimensions = new Cesium.Cartesian3(
+							boundingSphere.radius * 1.5, //宽度
+							boundingSphere.radius * 1.5, //长度
+							(propertyValue / 100) * 50 //高度
+						)
+						let color: Cesium.Color = null
+						let colorStr: string = filterSurgeColorScales(propertyValue)
+						// colorStr = 'rgb(80, 131, 179)'
+						color = Cesium.Color.fromCssColorString(colorStr)
+
+						// 创建立方体，尺寸与网格大小匹配
+						const boxEntity = viewer.entities.add({
+							position: Cesium.Cartesian3.fromRadians(
+								longitude,
+								latitude,
+								dimensions.z / 2
+							),
+							box: {
+								dimensions: dimensions, // 使用计算得到的尺寸
+								material: color.withAlpha(0.8),
+							},
+						})
+					}
+				}
+
+				// 缩放到数据范围
+				viewer.zoomTo(dataSource)
+			})
+			.catch(function (error) {
+				console.error('Error loading GeoJSON:', error)
+			})
+	}
+
 	/** 根据geojson加载水的效果 */
 	loadGeoJson2MapbyWaterPolygon(viewer: Cesium.Viewer, url: string): void {
 		Cesium.GeoJsonDataSource.load(url).then((dataSource) => {
@@ -147,7 +254,13 @@ export default class HomeView extends Vue {
 				geoJson: dataSource,
 				waterColor: 'rgb(80, 131, 179)',
 				alpha: 0.7,
+				speed: 1.2,
+				choppy: 6,
+				height: 1,
+				freq: 0.5,
 			})
+			// 缩放到数据范围
+			viewer.zoomTo(dataSource)
 			viewer.scene.primitives.add(polygon.primitive)
 		})
 	}
