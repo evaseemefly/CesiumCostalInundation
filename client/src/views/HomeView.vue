@@ -37,8 +37,9 @@ export default class HomeView extends Vue {
 	// loadUrl =
 	// 	'http://localhost:82/images/global_surge/coastal_data/zmax_lte_desc_smooth_100_b_20_1114.json'
 
-	loadUrl =
-		'http://localhost:82/images/global_surge/coastal_data/zmax_lte_desc_smooth_100_b_50_1114.json'
+	loadUrl = 'http://128.5.9.79:82/images/GLOBAL/TEST/zmax_lte_desc_smooth_100_b_50_1114.json'
+
+	// loadUrl = 'http://localhost:82/images/global_surge/coastal_data/zmax_lte_desc_smooth_100_b_50_1114.json'
 
 	// TODO:[-] 24-11-15 B 20 大于 150cm
 	// loadUrl =
