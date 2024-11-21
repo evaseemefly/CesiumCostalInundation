@@ -31,4 +31,7 @@ new Vue({
 	router,
 	store,
 	render: (h) => h(App),
+	mounted() {
+		this.$root.$options.initLoadDataSource = this.initLoadDataSource
+	},
 }).$mount('#app')

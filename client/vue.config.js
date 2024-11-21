@@ -32,7 +32,9 @@ module.exports = defineConfig({
 			unknownContextCritical: false,
 			unknownContextRegExp: /\/cesium\/cesium\/Source\/Core\/buildModuleUrl\.js/,
 		},
+		devtool: 'source-map', //开启debugger
 	},
+
 	chainWebpack: (config) => {
 		config.resolve.alias.set('@', resolve('src'))
 		config.plugin('html').tap((args) => {
@@ -40,15 +42,6 @@ module.exports = defineConfig({
 			return args
 		})
 	},
-	// configureWebpack: (config) => {
-	//     // webpack配置，值位对象时会合并配置，为方法时会改写配置
-	//     if (debug) {
-	//         // 开发环境配置
-	//         config.devtool = 'cheap-module-eval-source-map'
-	//     } else {
-	//         // 生产环境配置
-	//     }
-	// },
 	devServer: {
 		// 由之前的 'localhost'改为如下，端口默认8080
 		host: '0.0.0.0',
