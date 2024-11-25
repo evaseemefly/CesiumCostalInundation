@@ -5,14 +5,14 @@
 				<!-- <div class="nav_item_icon nav_icon_operator">-</div> -->
 				<div id="issue_selecter_nav" class="nav_item_icon nav_icon_operator">
 					<el-select
-						v-model="forecastType"
+						v-model="rasterShowType"
 						placeholder="请选择"
 						:popper-append-to-body="false"
 					>
 						<el-option
-							v-for="item in forecastTypes"
+							v-for="item in rasterShowTypes"
 							:key="item.key"
-							:label="item.val"
+							:label="item.label"
 							:value="item.key"
 						>
 						</el-option>
@@ -29,11 +29,17 @@ import { Component, Prop, Vue, Watch } from 'vue-property-decorator'
 // 过滤器
 import { fortmatData2YMDHM } from '@/util/filter'
 import { Getter, Mutation } from 'vuex-class'
-import { GET_WAVE_PRODUCT_ISSUE_DATETIME, SET_ISSUE_TS, SET_TIMESPAN } from '@/store/types'
+import {
+	GET_WAVE_PRODUCT_ISSUE_DATETIME,
+	SET_ISSUE_TS,
+	SET_RASTER_SHOW_TYPE,
+	SET_TIMESPAN,
+} from '@/store/types'
 import { loadDistCoverageIssueTs } from '@/api/raster'
 import { IHttpResponse } from '@/interface/common'
 import { fortmatData2MDHM } from '@/util/filter'
 import moment from 'moment'
+import { RasterShowType } from '@/enum/selections'
 /** 发布时间组件 */
 @Component({
 	filters: {
@@ -41,32 +47,47 @@ import moment from 'moment'
 	},
 })
 export default class SubNavForecastProductItem extends Vue {
-	forecastType = 'lte200'
+	rasterShowType = RasterShowType.UN_SELECT
 
-	forecastTypes: { key: string; val: string; label: string }[] = [
+	rasterShowTypes: { key: RasterShowType; val: string; label: string }[] = [
 		{
-			key: 'lte200',
-			label: '淹没深度',
-			val: '淹没深度',
+			key: RasterShowType.UN_SELECT,
+			label: '未选择',
+			val: '未选择',
 		},
 		{
-			key: 'lte150',
-			label: '大于150',
-			val: '大于150',
+			key: RasterShowType.RASTER,
+			label: '栅格图层',
+			val: '栅格图层',
+		},
+		// {
+		// 	key: RasterShowType.POLYGON,
+		// 	label: '多边形',
+		// 	val: '多边形',
+		// },
+		{
+			key: RasterShowType.POLYGON_CUBE,
+			label: '立方体',
+			val: '立方体',
+		},
+		{
+			key: RasterShowType.WATER_SURFACE,
+			label: '水面',
+			val: '水面',
 		},
 	]
 	mounted() {
 		// this.setForecastArea(this.selectedArea)
 	}
 
-	/** 设置当前选择的预报区域 */
-	// @Mutation(SET_SURGE_FORECAST_AREA, { namespace: 'surge' })
-	// setForecastArea: (val: ForecastAreaEnum) => void
+	@Watch('rasterShowType')
+	onShowType(val: RasterShowType): void {
+		this.setRasterShowType(val)
+	}
 
-	// @Watch('selectedArea')
-	// onSelectedArea(val: ForecastAreaEnum): void {
-	// 	this.setForecastArea(val)
-	// }
+	/** 设置栅格显示类型 */
+	@Mutation(SET_RASTER_SHOW_TYPE, { namespace: 'menu' })
+	setRasterShowType: (val: RasterShowType) => void
 }
 </script>
 <style scoped lang="less">

@@ -29,11 +29,17 @@ import { Component, Prop, Vue, Watch } from 'vue-property-decorator'
 // 过滤器
 import { fortmatData2YMDHM } from '@/util/filter'
 import { Getter, Mutation } from 'vuex-class'
-import { GET_WAVE_PRODUCT_ISSUE_DATETIME, SET_ISSUE_TS, SET_TIMESPAN } from '@/store/types'
+import {
+	GET_WAVE_PRODUCT_ISSUE_DATETIME,
+	SET_FloodLevelType,
+	SET_ISSUE_TS,
+	SET_TIMESPAN,
+} from '@/store/types'
 import { loadDistCoverageIssueTs } from '@/api/raster'
 import { IHttpResponse } from '@/interface/common'
 import { fortmatData2MDHM } from '@/util/filter'
 import moment from 'moment'
+import { FloodLevelType } from '@/enum/selections'
 /** 发布时间组件 */
 @Component({
 	filters: {
@@ -41,37 +47,37 @@ import moment from 'moment'
 	},
 })
 export default class SubNavWaterLevelItem extends Vue {
-	waterLevelKey = 'lte100'
+	waterLevelKey = FloodLevelType.LTE200
 
-	waterLevelOptions: { key: string; val: string; label: string }[] = [
+	waterLevelOptions: { key: FloodLevelType; val: string; label: string }[] = [
 		{
-			key: 'lte200',
-			label: '大于200',
-			val: '大于200',
-		},
-		{
-			key: 'lte150',
-			label: '大于150',
-			val: '大于150',
-		},
-		{
-			key: 'lte100',
+			key: FloodLevelType.LTE100,
 			label: '大于100',
 			val: '大于100',
 		},
+		{
+			key: FloodLevelType.LTE150,
+			label: '大于150',
+			val: '大于150',
+		},
+		// {
+		// 	key: FloodLevelType.LTE200,
+		// 	label: '大于200',
+		// 	val: '大于200',
+		// },
 	]
 	mounted() {
 		// this.setForecastArea(this.selectedArea)
 	}
 
-	/** 设置当前选择的预报区域 */
-	// @Mutation(SET_SURGE_FORECAST_AREA, { namespace: 'surge' })
-	// setForecastArea: (val: ForecastAreaEnum) => void
+	@Watch('waterLevelKey')
+	onShowType(val: FloodLevelType): void {
+		this.setFloodLevel(val)
+	}
 
-	// @Watch('selectedArea')
-	// onSelectedArea(val: ForecastAreaEnum): void {
-	// 	this.setForecastArea(val)
-	// }
+	/** 设置淹没深度 */
+	@Mutation(SET_FloodLevelType, { namespace: 'menu' })
+	setFloodLevel: (val: FloodLevelType) => void
 }
 </script>
 <style scoped lang="less">

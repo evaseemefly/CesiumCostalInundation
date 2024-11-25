@@ -60,6 +60,8 @@ import HeaderLogoView from '@/components/header/headerLogoView.vue'
 // 引入事件总线
 import { EventBus } from '@/bus/BUS'
 import { TO_LOAD_DATASROUCE } from '@/bus/types'
+import { GET_FloodLevelType, GET_RASTER_SHOW_TYPE } from '@/store/types'
+import { FloodLevelType, RasterShowType } from '@/enum/selections'
 
 @Component({ components: { NavMenuView, HeaderLogoView } })
 export default class HomeView extends Vue {
@@ -249,8 +251,7 @@ export default class HomeView extends Vue {
 		this.loadGeoJSON2MapbyColorScale(
 			this.viewer,
 			this.currentWaterLevelRasterUrl,
-			'_最大淹没深度(cm)',
-			false
+			'_最大淹没深度(cm)'
 		)
 	}
 
@@ -567,9 +568,10 @@ export default class HomeView extends Vue {
 	loadGeoJSON2MapbyColorScale(
 		viewer: Cesium.Viewer,
 		url: string,
-		propertyName: string,
-		outline = true
+		propertyName: string
+		// outline = true
 	): void {
+		let outline = true
 		// 加载 GeoJSON 数据
 		Cesium.GeoJsonDataSource.load(url)
 			.then(function (dataSource) {
@@ -610,6 +612,9 @@ export default class HomeView extends Vue {
 			.catch(function (error) {
 				console.error('Error loading GeoJSON:', error)
 			})
+			.finally(() => {
+				this.loading = false
+			})
 	}
 
 	/**@deprecated
@@ -637,9 +642,10 @@ export default class HomeView extends Vue {
 	loadGeoJson2MapbyCube(
 		viewer: Cesium.Viewer,
 		url: string,
-		propertyName: string,
-		outline = true
+		propertyName: string
+		// outline = true
 	): void {
+		let outline = true
 		// 加载 GeoJSON 数据
 		Cesium.GeoJsonDataSource.load(url)
 			.then(function (dataSource) {
@@ -702,24 +708,31 @@ export default class HomeView extends Vue {
 			.catch(function (error) {
 				console.error('Error loading GeoJSON:', error)
 			})
+			.finally(() => {
+				this.loading = false
+			})
 	}
 
 	/** 根据geojson加载水的效果 */
-	loadGeoJson2MapbyWaterPolygon(viewer: Cesium.Viewer, url: string): void {
-		Cesium.GeoJsonDataSource.load(url).then((dataSource) => {
-			let polygon = new WaterPolygon({
-				geoJson: dataSource,
-				waterColor: 'rgb(80, 131, 179)',
-				alpha: 0.7,
-				speed: 1.2,
-				choppy: 6,
-				height: 1,
-				freq: 0.5,
+	loadGeoJson2MapbyWaterPolygon(viewer: Cesium.Viewer, url: string, propertyName: string): void {
+		Cesium.GeoJsonDataSource.load(url)
+			.then((dataSource) => {
+				let polygon = new WaterPolygon({
+					geoJson: dataSource,
+					waterColor: 'rgb(80, 131, 179)',
+					alpha: 0.7,
+					speed: 1.2,
+					choppy: 6,
+					height: 1,
+					freq: 0.5,
+				})
+				// 缩放到数据范围
+				viewer.zoomTo(dataSource)
+				viewer.scene.primitives.add(polygon.primitive)
 			})
-			// 缩放到数据范围
-			viewer.zoomTo(dataSource)
-			viewer.scene.primitives.add(polygon.primitive)
-		})
+			.finally(() => {
+				this.loading = false
+			})
 	}
 
 	/** 加载地形数据 */
@@ -782,7 +795,72 @@ export default class HomeView extends Vue {
 
 	/** 全局方法: 预加载数据资源 */
 	initLoadDataSource(): void {
+		const viewer = this.viewer
+		/** 此处为预加载数据逻辑 */
 		console.log('initLoadDataSource')
+		const rasterShowType = this.menuOpts.getRasterShowType
+		const floodLevel = this.menuOpts.getFloodLevel
+		let filename = ''
+		const baseUrl = 'http://localhost:82/images/global_surge/coastal_data'
+
+		this.loading = true
+		/**
+		 * 1 栅格图层
+		 * 2 立方体
+		 * 3 多边形范围生成水面
+		 */
+		switch (floodLevel) {
+			case FloodLevelType.LTE100:
+				filename = 'zmax_output_lte_100.json'
+				break
+			case FloodLevelType.LTE150:
+				filename = 'zmax_output_lte_150.json'
+				break
+			default:
+				break
+		}
+
+		let todoFunc = null
+		switch (rasterShowType) {
+			case RasterShowType.RASTER:
+				todoFunc = this.loadGeoJSON2MapbyColorScale
+				break
+			case RasterShowType.POLYGON:
+				break
+			case RasterShowType.POLYGON_CUBE:
+				todoFunc = this.loadGeoJson2MapbyCube
+				break
+			case RasterShowType.WATER_SURFACE:
+				filename = 'zmax_lte_desc_smooth_100_b_50_1114.json'
+				todoFunc = this.loadGeoJson2MapbyWaterPolygon
+				break
+			default:
+				break
+		}
+		let url = `${baseUrl}/${filename}`
+		todoFunc(viewer, url, '_最大淹没深度(cm)')
+	}
+
+	/** 获取栅格图层显示样式 */
+	@Getter(GET_RASTER_SHOW_TYPE, { namespace: 'menu' })
+	getRasterShowType: RasterShowType
+
+	@Getter(GET_FloodLevelType, { namespace: 'menu' })
+	getFloodLevel: FloodLevelType
+
+	get menuOpts(): {
+		getRasterShowType: RasterShowType
+		getFloodLevel: FloodLevelType
+	} {
+		const { getRasterShowType, getFloodLevel } = this
+		return { getRasterShowType, getFloodLevel }
+	}
+
+	@Watch('menuOpts')
+	onMenuOpts(val: { getRasterShowType: RasterShowType; getFloodLevel: FloodLevelType }): void {
+		console.log(
+			`onMenuOpts发生变化,RasterShowType:${val.getRasterShowType},FloodLevelType:${val.getFloodLevel}`
+		)
 	}
 }
 </script>

@@ -368,3 +368,14 @@ export const SET_END_DT = 'SET_END_DT'
 export const SET_STATIONS_D85_LIST = 'SET_STATIONS_D85_LIST'
 /** 获取所有站点的D85集合 */
 export const GET_STATIONS_D85_LIST = 'GET_STATIONS_D85_LIST'
+
+// -- TODO[-]: 24-11-25
+/** 设置栅格图层类型 */
+export const SET_RASTER_SHOW_TYPE = 'SET_RASTER_SHOW_TYPE'
+/** 获取栅格图层类型 */
+export const GET_RASTER_SHOW_TYPE = 'GET_RASTER_SHOW_TYPE'
+
+/** 设置栅格图层类型 */
+export const SET_FloodLevelType = 'SET_FloodLevelType'
+/** 获取栅格图层类型 */
+export const GET_FloodLevelType = 'SET_FloodLevelType'
